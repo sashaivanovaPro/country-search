@@ -1,11 +1,25 @@
+export type Debounced<Args extends unknown[]> = ((...args: Args) => void) & {
+  cancel(): void;
+};
+
 export function debounce<Args extends unknown[]>(
   callback: (...args: Args) => void,
   delay: number,
-): (...args: Args) => void {
+): Debounced<Args> {
   let timer: ReturnType<typeof setTimeout> | undefined;
 
-  return (...args: Args): void => {
+  const cancel = (): void => {
     clearTimeout(timer);
-    timer = setTimeout(() => callback(...args), delay);
+    timer = undefined;
   };
+
+  const run = (...args: Args): void => {
+    cancel();
+    timer = setTimeout(() => {
+      timer = undefined;
+      callback(...args);
+    }, delay);
+  };
+
+  return Object.assign(run, { cancel });
 }
